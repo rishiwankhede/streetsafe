@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${vendor.stallName + ' – Trust check | StreetSafe'})}"></head>
+<body>
+
+<div class="ss-scan bg-white min-vh-100 shadow-sm">
+
+    <div class="ss-scan-top d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-patch-check-fill me-1"></i>StreetSafe</span>
+        <a class="text-white-50 small text-decoration-none fw-normal" th:href="@{/}">All stalls</a>
+    </div>
+
+    <!-- Verification banner -->
+    <section class="ss-verified-banner" th:classappend="${vendor.fssaiVerified} ? '' : 'pending'" aria-live="polite">
+        <i class="bi" th:classappend="${vendor.fssaiVerified} ? 'bi-patch-check-fill' : 'bi-hourglass-split'"></i>
+        <h1 th:text="${vendor.fssaiVerified} ? 'FSSAI Verified' : 'Not yet verified'">FSSAI Verified</h1>
+        <p class="mb-0" th:text="${vendor.fssaiVerified} ? 'This stall\'s licence number has been checked.' : 'This stall\'s FSSAI number could not be validated.'">
+            This stall's licence number has been checked.
+        </p>
+        <span class="ss-fssai" th:text="'FSSAI ' + ${vendor.fssaiNumber}">FSSAI 11517012000345</span>
+    </section>
+
+    <div class="p-3 p-sm-4">
+
+        <!-- Stall -->
+        <section class="mb-4">
+            <h2 class="h3 fw-bold mb-1" th:text="${vendor.stallName}">Stall name</h2>
+            <p class="text-muted mb-0"><i class="bi bi-geo-alt"></i> <span th:text="${vendor.location}">Location</span></p>
+            <p class="text-muted small mb-0">Run by <span th:text="${vendor.ownerName}">Owner</span></p>
+        </section>
+
+        <!-- Rating summary -->
+        <section class="ss-card p-3 mb-4" aria-labelledby="ratingHeading">
+            <h2 class="h6 fw-bold mb-3" id="ratingHeading">Community hygiene rating</h2>
+            <div class="row align-items-center g-3" th:if="${!reviews.isEmpty()}">
+                <div class="col-4 text-center">
+                    <div class="ss-avg" th:text="${#numbers.formatDecimal(vendor.averageRating, 1, 'COMMA', 1, 'POINT')}">4.5</div>
+                    <div><span th:replace="~{fragments :: stars(${vendor.roundedRating})}"></span></div>
+                    <div class="text-muted small" th:text="${reviews.size()} + (${reviews.size() == 1} ? ' review' : ' reviews')">2 reviews</div>
+                </div>
+                <div class="col-8">
+                    <div th:replace="~{fragments :: breakdown(${breakdown})}"></div>
+                </div>
+            </div>
+            <p class="text-muted mb-0" th:if="${reviews.isEmpty()}">No ratings yet. Be the first to review this stall.</p>
+        </section>
+
+        <!-- Review form -->
+        <section class="mb-4" aria-labelledby="reviewHeading" id="review">
+            <h2 class="h5 fw-bold mb-3" id="reviewHeading">How was your experience?</h2>
+
+            <div class="alert alert-success" role="status" th:if="${reviewSuccess}" th:text="${reviewSuccess}"></div>
+            <div class="alert alert-danger" role="alert" th:if="${reviewError}" th:text="${reviewError}"></div>
+
+            <form th:action="@{/scan/{id}/review(id=${vendor.id})}" method="post">
+                <fieldset class="mb-3">
+                    <legend class="form-label fw-semibold fs-6 mb-1">Your rating</legend>
+                    <div class="star-picker">
+                        <input type="radio" name="rating" id="star5" value="5" required>
+                        <label for="star5" title="5 stars, excellent"><i class="bi bi-star-fill"></i><span class="visually-hidden">5 stars</span></label>
+                        <input type="radio" name="rating" id="star4" value="4">
+                        <label for="star4" title="4 stars, good"><i class="bi bi-star-fill"></i><span class="visually-hidden">4 stars</span></label>
+                        <input type="radio" name="rating" id="star3" value="3">
+                        <label for="star3" title="3 stars, okay"><i class="bi bi-star-fill"></i><span class="visually-hidden">3 stars</span></label>
+                        <input type="radio" name="rating" id="star2" value="2">
+                        <label for="star2" title="2 stars, poor"><i class="bi bi-star-fill"></i><span class="visually-hidden">2 stars</span></label>
+                        <input type="radio" name="rating" id="star1" value="1">
+                        <label for="star1" title="1 star, very poor"><i class="bi bi-star-fill"></i><span class="visually-hidden">1 star</span></label>
+                    </div>
+                </fieldset>
+
+                <div class="mb-3">
+                    <label for="customerName" class="form-label fw-semibold">Your name <span class="text-muted fw-normal">(optional)</span></label>
+                    <input type="text" class="form-control form-control-lg" id="customerName" name="customerName" maxlength="60" autocomplete="name">
+                </div>
+                <div class="mb-3">
+                    <label for="comment" class="form-label fw-semibold">Your review <span class="text-muted fw-normal">(optional)</span></label>
+                    <textarea class="form-control" id="comment" name="comment" rows="3" maxlength="500"
+                              placeholder="Was the stall clean? Were the cooks wearing gloves? Was the food fresh?"></textarea>
+                </div>
+                <button type="submit" class="btn btn-leaf btn-lg w-100">Submit review</button>
+            </form>
+        </section>
+
+        <!-- Past reviews -->
+        <section aria-labelledby="pastHeading">
+            <h2 class="h5 fw-bold mb-2" id="pastHeading">What customers say</h2>
+            <p class="text-muted" th:if="${reviews.isEmpty()}">Nothing yet. Your review will be the first.</p>
+
+            <div class="ss-review py-3" th:each="r : ${reviews}">
+                <div class="d-flex gap-3">
+                    <span class="ss-avatar" th:text="${#strings.toUpperCase(#strings.substring(r.customerName, 0, 1))}">A</span>
+                    <div class="flex-grow-1">
+                        <div class="d-flex flex-wrap justify-content-between gap-1">
+                            <strong th:text="${r.customerName}">Customer</strong>
+                            <span class="text-muted small" th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy')}">14 Sep 2026</span>
+                        </div>
+                        <span th:replace="~{fragments :: stars(${r.rating})}"></span>
+                        <p class="mb-0 mt-1" th:if="${r.comment != null}" th:text="${r.comment}">Comment</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="text-center small text-muted border-top py-3">Verified on StreetSafe</div>
+</div>
+
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

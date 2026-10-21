@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('StreetSafe – Street food you can trust')}"></head>
+<body>
+
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<!-- Hero -->
+<header class="ss-hero">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <h1>Scan. Check. Then eat.</h1>
+                <p class="lead mt-3">
+                    Every StreetSafe stall carries a QR code. One scan shows its FSSAI licence status and what
+                    other customers say about its hygiene, before you order.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <button type="button" class="btn btn-ss btn-lg" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        <i class="bi bi-shop me-1"></i> Register your stall
+                    </button>
+                    <a href="#stalls" class="btn btn-outline-light btn-lg">Browse stalls</a>
+                </div>
+                <div class="ss-hero-stats">
+                    <div><strong th:text="${totalStalls}">10</strong><span>registered stalls</span></div>
+                    <div><strong th:text="${verifiedStalls}">10</strong><span>FSSAI verified</span></div>
+                    <div><strong th:text="${totalReviews}">6</strong><span>customer reviews</span></div>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-flex justify-content-center">
+                <div class="ss-seal ss-hero-seal">
+                    <i class="bi bi-patch-check-fill"></i>
+                    <div>FSSAI Verified<small>14-digit licence number checked</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="container py-5">
+
+    <!-- Flash messages -->
+    <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${success}">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Stalls -->
+    <section id="stalls">
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">Registered stalls</h2>
+                <p class="text-muted mb-0">Open a stall's dashboard to see its QR standee, or its public page to see what customers see.</p>
+            </div>
+            <div class="input-group" style="max-width:320px">
+                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                <input type="search" id="stallSearch" class="form-control" placeholder="Search by name or city"
+                       aria-label="Search stalls">
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4 stall-item" th:each="v : ${vendors}"
+                 th:data-search="${#strings.toLowerCase(v.stallName + ' ' + v.location + ' ' + v.ownerName)}">
+                <article class="ss-card ss-stall p-4">
+                    <div class="mb-2">
+                        <span class="ss-chip ok" th:if="${v.fssaiVerified}"><i class="bi bi-patch-check-fill"></i> FSSAI Verified</span>
+                        <span class="ss-chip pending" th:unless="${v.fssaiVerified}"><i class="bi bi-hourglass-split"></i> Not verified</span>
+                    </div>
+                    <h3 class="mb-1" th:text="${v.stallName}">Stall name</h3>
+                    <p class="text-muted small mb-2"><i class="bi bi-geo-alt"></i> <span th:text="${v.location}">Location</span></p>
+                    <p class="small mb-3">Run by <span class="fw-semibold" th:text="${v.ownerName}">Owner</span></p>
+
+                    <div class="mt-auto">
+                        <div class="d-flex align-items-center gap-2 mb-3" th:if="${v.reviewCount > 0}">
+                            <span th:replace="~{fragments :: stars(${v.roundedRating})}"></span>
+                            <strong th:text="${#numbers.formatDecimal(v.averageRating, 1, 'COMMA', 1, 'POINT')}">4.5</strong>
+                            <span class="text-muted small" th:text="'(' + ${v.reviewCount} + ')'">(2)</span>
+                        </div>
+                        <div class="text-muted small mb-3" th:if="${v.reviewCount == 0}">No ratings yet</div>
+
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-leaf btn-sm flex-fill" th:href="@{/vendor/{id}(id=${v.id})}">Dashboard</a>
+                            <a class="btn btn-outline-leaf btn-sm flex-fill" th:href="@{/scan/{id}(id=${v.id})}">Public page</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <div id="noResults" class="text-center text-muted py-5 d-none">
+            No stalls match your search. Try a different name or city.
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section id="how" class="mt-5 pt-4">
+        <h2 class="fw-bold mb-4">How StreetSafe works</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="ss-card p-4 h-100">
+                    <h3 class="h5"><i class="bi bi-shop text-success me-2"></i>Vendors register</h3>
+                    <p class="mb-0 text-muted">Add your stall with its 14-digit FSSAI number. If the format is valid (14 digits starting with 1 or 2), the badge is awarded automatically.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="ss-card p-4 h-100">
+                    <h3 class="h5"><i class="bi bi-qr-code text-success me-2"></i>Stalls display a QR</h3>
+                    <p class="mb-0 text-muted">Each stall gets its own QR code standee that points to its public verification page. Print it and stick it on the cart.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="ss-card p-4 h-100">
+                    <h3 class="h5"><i class="bi bi-star-half text-success me-2"></i>Customers rate it</h3>
+                    <p class="mb-0 text-muted">Customers scan, see the verification status and the hygiene rating, and leave their own 1&ndash;5 star review in seconds.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+
+<!-- Register modal -->
+<div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" th:action="@{/vendor/register}" method="post">
+            <div class="modal-header">
+                <h2 class="modal-title h5 fw-bold" id="registerModalLabel">Register your stall</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert" th:if="${registerError}" th:text="${registerError}"></div>
+
+                <div class="mb-3">
+                    <label for="stallName" class="form-label fw-semibold">Stall name</label>
+                    <input type="text" class="form-control" id="stallName" name="stallName" maxlength="120" required
+                           placeholder="e.g. Sharma Ji Chole Bhature">
+                </div>
+                <div class="mb-3">
+                    <label for="ownerName" class="form-label fw-semibold">Owner name</label>
+                    <input type="text" class="form-control" id="ownerName" name="ownerName" maxlength="120" required>
+                </div>
+                <div class="mb-3">
+                    <label for="location" class="form-label fw-semibold">Location</label>
+                    <input type="text" class="form-control" id="location" name="location" maxlength="200" required
+                           placeholder="Area, city, state">
+                </div>
+                <div class="mb-1">
+                    <label for="fssaiNumber" class="form-label fw-semibold">FSSAI number</label>
+                    <input type="text" class="form-control ss-fssai" id="fssaiNumber" name="fssaiNumber"
+                           inputmode="numeric" pattern="[0-9]{14}" minlength="14" maxlength="14" required
+                           placeholder="14 digits" aria-describedby="fssaiHelp">
+                    <div id="fssaiHelp" class="form-text">Exactly 14 digits. It earns the Verified badge when it starts with 1 or 2.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-leaf">Register stall</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+
+<script>
+    // Live search over the stall cards
+    document.getElementById('stallSearch').addEventListener('input', function () {
+        var q = this.value.trim().toLowerCase();
+        var shown = 0;
+        document.querySelectorAll('.stall-item').forEach(function (el) {
+            var match = el.getAttribute('data-search').indexOf(q) !== -1;
+            el.classList.toggle('d-none', !match);
+            if (match) { shown++; }
+        });
+        document.getElementById('noResults').classList.toggle('d-none', shown !== 0);
+    });
+</script>
+<script th:if="${registerError}">
+    // Re-open the form when the server rejected the submission
+    document.addEventListener('DOMContentLoaded', function () {
+        new bootstrap.Modal(document.getElementById('registerModal')).show();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${vendor.stallName + ' – StreetSafe dashboard'})}"></head>
+<body>
+
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<main class="container py-4 py-lg-5">
+
+    <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${success}">
+        <i class="bi bi-check-circle-fill me-1"></i><span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" th:if="${warning}">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i><span th:text="${warning}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a th:href="@{/}">All stalls</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Vendor dashboard</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h1 class="fw-bold mb-1" th:text="${vendor.stallName}">Stall name</h1>
+            <p class="text-muted mb-0">
+                <i class="bi bi-geo-alt"></i> <span th:text="${vendor.location}">Location</span>
+                &nbsp;&middot;&nbsp; Owner: <span th:text="${vendor.ownerName}">Owner</span>
+            </p>
+        </div>
+        <div class="ss-seal" th:if="${vendor.fssaiVerified}">
+            <i class="bi bi-patch-check-fill"></i>
+            <div>FSSAI Verified<small>Licence format checked</small></div>
+        </div>
+        <div class="ss-seal pending" th:unless="${vendor.fssaiVerified}">
+            <i class="bi bi-hourglass-split"></i>
+            <div>Not verified<small>FSSAI format invalid</small></div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Left: details + feedback -->
+        <div class="col-lg-7">
+
+            <section class="ss-card p-4 mb-4" aria-labelledby="detailsHeading">
+                <h2 class="h5 fw-bold mb-3" id="detailsHeading">Stall details</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted fw-normal">FSSAI number</dt>
+                    <dd class="col-sm-8 ss-fssai fw-semibold" th:text="${vendor.fssaiNumber}">11517012000345</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Status</dt>
+                    <dd class="col-sm-8">
+                        <span class="ss-chip ok" th:if="${vendor.fssaiVerified}"><i class="bi bi-patch-check-fill"></i> FSSAI Verified</span>
+                        <span class="ss-chip pending" th:unless="${vendor.fssaiVerified}"><i class="bi bi-hourglass-split"></i> Not verified</span>
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Owner</dt>
+                    <dd class="col-sm-8" th:text="${vendor.ownerName}">Owner</dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Location</dt>
+                    <dd class="col-sm-8 mb-0" th:text="${vendor.location}">Location</dd>
+                </dl>
+            </section>
+
+            <section class="ss-card p-4 mb-4" aria-labelledby="ratingHeading">
+                <h2 class="h5 fw-bold mb-3" id="ratingHeading">Community hygiene rating</h2>
+                <div class="row align-items-center g-3" th:if="${!reviews.isEmpty()}">
+                    <div class="col-sm-4 text-center">
+                        <div class="ss-avg" th:text="${#numbers.formatDecimal(vendor.averageRating, 1, 'COMMA', 1, 'POINT')}">4.5</div>
+                        <div class="fs-5"><span th:replace="~{fragments :: stars(${vendor.roundedRating})}"></span></div>
+                        <div class="text-muted small" th:text="${reviews.size()} + (${reviews.size() == 1} ? ' review' : ' reviews')">2 reviews</div>
+                    </div>
+                    <div class="col-sm-8">
+                        <div th:replace="~{fragments :: breakdown(${breakdown})}"></div>
+                    </div>
+                </div>
+                <p class="text-muted mb-0" th:if="${reviews.isEmpty()}">
+                    No ratings yet. Print the QR standee and place it where customers can see it.
+                </p>
+            </section>
+
+            <section class="ss-card p-4" aria-labelledby="feedbackHeading">
+                <h2 class="h5 fw-bold mb-3" id="feedbackHeading">Customer feedback</h2>
+                <p class="text-muted mb-0" th:if="${reviews.isEmpty()}">Reviews will appear here as soon as customers submit them.</p>
+
+                <div class="ss-review py-3" th:each="r : ${reviews}">
+                    <div class="d-flex gap-3">
+                        <span class="ss-avatar" th:text="${#strings.toUpperCase(#strings.substring(r.customerName, 0, 1))}">A</span>
+                        <div class="flex-grow-1">
+                            <div class="d-flex flex-wrap justify-content-between gap-1">
+                                <strong th:text="${r.customerName}">Customer</strong>
+                                <span class="text-muted small" th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy, hh:mm a')}">14 Sep 2026</span>
+                            </div>
+                            <span th:replace="~{fragments :: stars(${r.rating})}"></span>
+                            <p class="mb-0 mt-1" th:if="${r.comment != null}" th:text="${r.comment}">Comment</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right: QR standee -->
+        <div class="col-lg-5">
+            <div class="ss-card p-4">
+                <h2 class="h5 fw-bold mb-3">QR standee</h2>
+
+                <div id="standee" class="ss-standee">
+                    <div class="ss-standee-top" th:classappend="${vendor.fssaiVerified} ? '' : 'pending'">
+                        <i class="bi" th:classappend="${vendor.fssaiVerified} ? 'bi-patch-check-fill' : 'bi-hourglass-split'"></i>
+                        <strong th:text="${vendor.fssaiVerified} ? 'FSSAI Verified' : 'Verification pending'">FSSAI Verified</strong>
+                    </div>
+                    <div class="ss-standee-body">
+                        <h2 th:text="${vendor.stallName}">Stall name</h2>
+                        <p class="text-muted small mb-2" th:text="${vendor.location}">Location</p>
+                        <img th:src="'data:image/png;base64,' + ${qrCode}" alt="QR code linking to this stall's public verification page">
+                        <p class="fw-semibold mb-1 mt-2">Scan to check hygiene rating &amp; reviews</p>
+                        <p class="ss-fssai small text-muted mb-0" th:text="'FSSAI ' + ${vendor.fssaiNumber}">FSSAI 11517012000345</p>
+                    </div>
+                    <div class="ss-standee-foot">Verified on StreetSafe</div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="button" class="btn btn-leaf" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print standee</button>
+                    <a class="btn btn-outline-leaf" th:href="'data:image/png;base64,' + ${qrCode}"
+                       th:download="'streetsafe-qr-' + ${vendor.id} + '.png'"><i class="bi bi-download me-1"></i> Download QR image</a>
+                    <a class="btn btn-outline-leaf" th:href="@{/scan/{id}(id=${vendor.id})}" target="_blank" rel="noopener">
+                        <i class="bi bi-phone me-1"></i> Open customer page
+                    </a>
+                </div>
+                <!-- Interactive Google Map Embed -->
+                <div class="mt-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    <iframe
+                            width="100%"
+                            height="220"
+                            style="border:0;"
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            th:src="'https://maps.google.com/maps?q=' + ${#strings.replace(vendor.location, ' ', '+')} + '&output=embed'">
+                    </iframe>
+                </div>
+
+                <label for="scanUrl" class="form-label small fw-semibold mt-4 mb-1">Link inside the QR code</label>
+                <div class="input-group">
+                    <input type="text" id="scanUrl" class="form-control form-control-sm" readonly th:value="${scanUrl}">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" id="copyBtn">Copy</button>
+                </div>
+
+                <div class="alert alert-warning small mt-3 mb-0" role="alert" th:if="${localhostWarning}">
+                    <strong>Phones can't open "localhost".</strong> To scan this code with a phone on the same Wi-Fi,
+                    open this dashboard using your computer's IP address (for example <code>http://192.168.1.10:8080</code>),
+                    or start the app with <code>STREETSAFE_BASE_URL=http://&lt;your-ip&gt;:8080</code>.
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+
+<script>
+    document.getElementById('copyBtn').addEventListener('click', function () {
+        var input = document.getElementById('scanUrl');
+        var btn = this;
+        input.select();
+        input.setSelectionRange(0, 99999);
+        var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1800); };
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(input.value).then(done);
+        } else {
+            document.execCommand('copy');
+            done();
+        }
+    });
+</script>
+</body>
+</html>

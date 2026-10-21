@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('StreetSafe – Something went wrong')}"></head>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+<main class="container py-5 text-center" style="max-width:600px">
+    <div class="display-3 fw-bold ss-display text-success" th:text="${status}">404</div>
+    <h1 class="h3 fw-bold mt-2" th:text="${status == 404} ? 'We couldn\'t find that page' : 'Something went wrong'">We couldn't find that page</h1>
+    <p class="text-muted">
+        If you scanned a QR code, the stall may have been removed. Check the link, or browse all registered stalls.
+    </p>
+    <a class="btn btn-leaf" th:href="@{/}">Back to all stalls</a>
+</main>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>
