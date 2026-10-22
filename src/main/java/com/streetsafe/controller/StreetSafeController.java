@@ -45,14 +45,27 @@ public class StreetSafeController {
     // ------------------------------------------------------------------ Home
 
     @GetMapping("/")
-    public String home(Model model) {
-        List<Vendor> vendors = vendorRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
-        long verifiedCount = vendors.stream().filter(Vendor::isFssaiVerified).count();
+    public String homePage(@RequestParam(name = "sort", required = false) String sort, Model model) {
+        List<Vendor> vendors = vendorRepository.findAll();
+
+        // Sort using the existing getAverageRating() method from Vendor.java
+        if ("best".equalsIgnoreCase(sort)) {
+            vendors.sort((v1, v2) -> Double.compare(v2.getAverageRating(), v1.getAverageRating()));
+        } else if ("worst".equalsIgnoreCase(sort)) {
+            vendors.sort((v1, v2) -> Double.compare(v1.getAverageRating(), v2.getAverageRating()));
+        }
+
+        // Keep your existing stats counts
+        long totalStalls = vendors.size();
+        long verifiedStalls = vendors.stream().filter(Vendor::isFssaiVerified).count();
+        long totalReviews = reviewRepository.count();
 
         model.addAttribute("vendors", vendors);
-        model.addAttribute("totalStalls", vendors.size());
-        model.addAttribute("verifiedStalls", verifiedCount);
-        model.addAttribute("totalReviews", reviewRepository.count());
+        model.addAttribute("currentSort", sort);
+        model.addAttribute("totalStalls", totalStalls);
+        model.addAttribute("verifiedStalls", verifiedStalls);
+        model.addAttribute("totalReviews", totalReviews);
+
         return "index";
     }
 

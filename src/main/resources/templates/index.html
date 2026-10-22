@@ -57,6 +57,24 @@
                 <input type="search" id="stallSearch" class="form-control" placeholder="Search by name or city"
                        aria-label="Search stalls">
             </div>
+            <!-- Rating Filter Controls -->
+            <div class="btn-group ms-auto" role="group" aria-label="Sort stalls by rating">
+                <a th:href="@{/(sort='all')}"
+                   class="btn btn-sm btn-outline-secondary"
+                   th:classappend="${currentSort == null or currentSort == 'all'} ? 'active' : ''">
+                    All
+                </a>
+                <a th:href="@{/(sort='best')}"
+                   class="btn btn-sm btn-outline-success"
+                   th:classappend="${currentSort == 'best'} ? 'active' : ''">
+                    ★ Best Rated
+                </a>
+                <a th:href="@{/(sort='worst')}"
+                   class="btn btn-sm btn-outline-danger"
+                   th:classappend="${currentSort == 'worst'} ? 'active' : ''">
+                    ⚠ Lowest Rated
+                </a>
+            </div>
         </div>
 
         <div class="row g-4">
